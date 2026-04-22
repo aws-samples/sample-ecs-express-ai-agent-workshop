@@ -1,0 +1,8 @@
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  sharp: true
+overrides:
+  next@>=10.0.0 <16.1.7: '>=16.1.7'
+  next@>=16.0.0-beta.0 <16.1.7: '>=16.1.7'
+  next@>=16.0.1 <16.1.7: '>=16.1.7'

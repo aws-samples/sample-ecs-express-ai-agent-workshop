@@ -1,0 +1,4 @@
+{
+  "ITEM_NOT_FOUND": "Item #{id} not found",
+  "NOT_ITEM_OWNER": "You do not own this item"
+}

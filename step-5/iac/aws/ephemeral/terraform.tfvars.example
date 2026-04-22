@@ -1,0 +1,10 @@
+app_unique_id = "oauth2-app"
+
+# image_tag = "latest"
+
+# Service URLs — set to ECS Express Gateway endpoints after first deployment.
+# frontend_url = "https://xxx.us-east-1.express.ecs.aws"
+# backend_url  = "https://yyy.us-east-1.express.ecs.aws"
+
+# Database
+database_password = "CHANGE_ME"

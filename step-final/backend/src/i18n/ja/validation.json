@@ -1,0 +1,8 @@
+{
+  "IS_EMAIL": "{property}は有効なメールアドレスである必要があります",
+  "IS_STRING": "{property}は文字列である必要があります",
+  "IS_NOT_EMPTY": "{property}は空にできません",
+  "MIN_LENGTH": "{property}は{constraints.0}文字以上である必要があります",
+  "LENGTH": "{property}は{constraints.0}文字以上{constraints.1}文字以下である必要があります",
+  "MAX_LENGTH": "{property}は{constraints.0}文字以下である必要があります"
+}

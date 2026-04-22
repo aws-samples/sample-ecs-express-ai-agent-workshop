@@ -1,0 +1,63 @@
+name: Reusable IaC Persistent
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      apply:
+        required: true
+        type: boolean
+
+jobs:
+  plan-apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Bootstrap S3 tfstate backend
+        uses: ./.github/actions/bootstrap-tfstate-s3
+        with:
+          bucket: ${{ vars.AWS_TF_STATE_BUCKET }}
+          region: ${{ vars.AWS_TF_STATE_REGION }}
+
+      - name: Terraform Init
+        run: |
+          terraform -chdir=iac/aws init \
+            -backend-config="bucket=${{ vars.AWS_TF_STATE_BUCKET }}" \
+            -backend-config="region=${{ vars.AWS_TF_STATE_REGION }}"
+
+      - name: Terraform Validate
+        run: terraform -chdir=iac/aws validate
+
+      - name: Terraform Plan
+        env:
+          TF_VAR_app_unique_id: ${{ vars.APP_UNIQUE_ID }}
+          TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+        run: |
+          terraform -chdir=iac/aws plan -no-color -input=false 2>&1 | tee plan-output.txt
+          {
+            echo "### Terraform Plan (${{ inputs.environment }}) — aws"
+            echo '```'
+            cat plan-output.txt
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Terraform Apply
+        if: inputs.apply
+        env:
+          TF_VAR_app_unique_id: ${{ vars.APP_UNIQUE_ID }}
+          TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+        run: terraform -chdir=iac/aws apply -auto-approve -input=false

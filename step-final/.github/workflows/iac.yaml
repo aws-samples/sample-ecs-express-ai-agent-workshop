@@ -1,0 +1,46 @@
+name: IaC Persistent
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'iac/aws/*'
+      - '.github/workflows/iac.yaml'
+      - '.github/workflows/_reusable-iac.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'iac/aws/*'
+      - '.github/workflows/iac.yaml'
+      - '.github/workflows/_reusable-iac.yaml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: Staging
+        type: environment
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+jobs:
+  staging:
+    name: Persistent — Staging
+    uses: ./.github/workflows/_reusable-iac.yaml
+    with:
+      environment: Staging
+      apply: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    secrets: inherit
+
+  production:
+    name: Persistent — Production
+    needs: [staging]
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'Production'
+    uses: ./.github/workflows/_reusable-iac.yaml
+    with:
+      environment: Production
+      apply: true
+    secrets: inherit

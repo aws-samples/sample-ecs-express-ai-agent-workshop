@@ -1,0 +1,54 @@
+name: E2E Tests for Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'compose.yaml'
+      - 'Dockerfiles.d/web/**'
+      - 'Dockerfiles.d/web-e2e-tests/**'
+      - '.github/workflows/web.e2e-tests.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'compose.yaml'
+      - 'Dockerfiles.d/web/**'
+      - 'Dockerfiles.d/web-e2e-tests/**'
+      - '.github/workflows/web.e2e-tests.yaml'
+  workflow_dispatch:
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Create .env
+        run: |
+          echo "UID=$(id -u)" > .env
+          echo "GID=$(id -g)" >> .env
+
+      - name: Build images
+        run: docker compose --profile e2e-tests build
+
+      - name: Run E2E tests
+        run: |
+          docker compose --profile e2e-tests up \
+            --exit-code-from web-e2e-tests \
+            --abort-on-container-exit
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: web/e2e-tests/playwright-report/
+          retention-days: 7
+
+      - name: Stop all services
+        if: always()
+        run: docker compose --profile e2e-tests down -v

@@ -1,0 +1,36 @@
+name: Bootstrap S3 tfstate backend
+description: Create an S3 bucket for Terraform state if it does not exist
+
+inputs:
+  bucket:
+    description: 'S3 bucket name'
+    required: true
+  region:
+    description: 'S3 bucket region'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Bootstrap S3 tfstate backend
+      shell: bash
+      run: |
+        if ! aws s3api head-bucket --bucket "${{ inputs.bucket }}" 2>/dev/null; then
+          echo "Creating S3 bucket: ${{ inputs.bucket }}"
+          if [ "${{ inputs.region }}" = "us-east-1" ]; then
+            aws s3api create-bucket \
+              --bucket "${{ inputs.bucket }}" \
+              --region "${{ inputs.region }}"
+          else
+            aws s3api create-bucket \
+              --bucket "${{ inputs.bucket }}" \
+              --region "${{ inputs.region }}" \
+              --create-bucket-configuration LocationConstraint="${{ inputs.region }}"
+          fi
+          aws s3api put-bucket-versioning \
+            --bucket "${{ inputs.bucket }}" \
+            --versioning-configuration Status=Enabled
+          aws s3api put-public-access-block \
+            --bucket "${{ inputs.bucket }}" \
+            --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+        fi

@@ -1,0 +1,7 @@
+app_unique_id = "oauth2-app"
+
+# Container image tag (registry URL is derived from ECR repository outputs)
+# image_tag = "latest"
+
+# Service URL — set to ECS Express Gateway endpoint after first deployment.
+# frontend_url = "https://xxx.us-east-1.express.ecs.aws"

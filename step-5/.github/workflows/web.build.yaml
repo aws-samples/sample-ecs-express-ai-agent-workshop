@@ -1,0 +1,46 @@
+name: Build & publish web image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/app/**'
+      - 'Dockerfiles.d/web-build/**'
+      - 'iac/aws/*'
+      - '.github/workflows/web.build.yaml'
+      - '.github/workflows/_reusable-web-build.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'web/app/**'
+      - 'Dockerfiles.d/web-build/**'
+      - 'iac/aws/*'
+      - '.github/workflows/web.build.yaml'
+      - '.github/workflows/_reusable-web-build.yaml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: Staging
+        type: environment
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  staging:
+    uses: ./.github/workflows/_reusable-web-build.yaml
+    with:
+      environment: Staging
+    secrets: inherit
+
+  production:
+    needs: staging
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'Production'
+    uses: ./.github/workflows/_reusable-web-build.yaml
+    with:
+      environment: Production
+    secrets: inherit

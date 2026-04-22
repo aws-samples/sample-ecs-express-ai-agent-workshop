@@ -1,0 +1,29 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev -p 3000",
+    "start": "next start -p 3000"
+  },
+  "dependencies": {
+    "next": "16.x",
+    "next-intl": "^4",
+    "react": "19.x",
+    "react-dom": "19.x"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.2",
+    "@types/react": "19.2.14",
+    "typescript": "6.0.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "next@>=16.0.1 <16.1.7": ">=16.1.7",
+      "next@>=16.0.0-beta.0 <16.1.7": ">=16.1.7",
+      "next@>=10.0.0 <16.1.7": ">=16.1.7",
+      "picomatch@>=4.0.0 <4.0.4": ">=4.0.4"
+    }
+  }
+}

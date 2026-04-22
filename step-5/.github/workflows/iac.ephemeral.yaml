@@ -1,0 +1,125 @@
+name: IaC Ephemeral
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: Staging
+        type: environment
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  ephemeral:
+    name: "Ephemeral — ${{ inputs.environment }} / aws / ${{ inputs.action }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Bootstrap S3 tfstate backend
+        uses: ./.github/actions/bootstrap-tfstate-s3
+        with:
+          bucket: ${{ vars.AWS_TF_STATE_BUCKET }}
+          region: ${{ vars.AWS_TF_STATE_REGION }}
+
+      - name: Terraform Init (persistent)
+        run: |
+          terraform -chdir=iac/aws init \
+            -backend-config="bucket=${{ vars.AWS_TF_STATE_BUCKET }}" \
+            -backend-config="region=${{ vars.AWS_TF_STATE_REGION }}"
+
+      - name: Verify persistent layer has no drift
+        env:
+          TF_VAR_app_unique_id: ${{ vars.APP_UNIQUE_ID }}
+          TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+        run: |
+          set +e
+          terraform -chdir=iac/aws plan -no-color -detailed-exitcode -input=false
+          exit_code=$?
+          set -e
+          if [ "$exit_code" -eq 1 ]; then
+            echo "::error::Persistent layer plan failed."
+            exit 1
+          elif [ "$exit_code" -eq 2 ]; then
+            echo "::error::Persistent layer has pending changes. Apply them via the 'IaC Persistent' workflow first."
+            exit 1
+          fi
+
+      - name: Terraform Init (ephemeral)
+        run: |
+          terraform -chdir=iac/aws/ephemeral init \
+            -backend-config="bucket=${{ vars.AWS_TF_STATE_BUCKET }}" \
+            -backend-config="region=${{ vars.AWS_TF_STATE_REGION }}"
+
+      - name: Terraform Validate
+        if: inputs.action != 'destroy'
+        run: terraform -chdir=iac/aws/ephemeral validate
+
+      - name: Terraform Plan
+        if: inputs.action == 'plan' || inputs.action == 'apply'
+        env:
+          TF_VAR_app_unique_id: ${{ vars.APP_UNIQUE_ID }}
+          TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+          TF_VAR_frontend_url: ${{ vars.FRONTEND_URL }}
+          TF_VAR_backend_url: ${{ vars.BACKEND_URL }}
+          TF_VAR_database_password: ${{ secrets.TF_VAR_database_password }}
+          TF_VAR_image_tag: ${{ vars.IMAGE_TAG || 'latest' }}
+          TF_VAR_aws_tf_state_bucket: ${{ vars.AWS_TF_STATE_BUCKET }}
+          TF_VAR_aws_tf_state_region: ${{ vars.AWS_TF_STATE_REGION }}
+        run: |
+          terraform -chdir=iac/aws/ephemeral plan -no-color -input=false 2>&1 | tee plan-output.txt
+          {
+            echo "### Terraform Plan — aws/ephemeral"
+            echo '```'
+            cat plan-output.txt
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Terraform Apply
+        if: inputs.action == 'apply'
+        env:
+          TF_VAR_app_unique_id: ${{ vars.APP_UNIQUE_ID }}
+          TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+          TF_VAR_frontend_url: ${{ vars.FRONTEND_URL }}
+          TF_VAR_backend_url: ${{ vars.BACKEND_URL }}
+          TF_VAR_database_password: ${{ secrets.TF_VAR_database_password }}
+          TF_VAR_image_tag: ${{ vars.IMAGE_TAG || 'latest' }}
+          TF_VAR_aws_tf_state_bucket: ${{ vars.AWS_TF_STATE_BUCKET }}
+          TF_VAR_aws_tf_state_region: ${{ vars.AWS_TF_STATE_REGION }}
+        run: terraform -chdir=iac/aws/ephemeral apply -auto-approve -input=false
+
+      - name: Terraform Destroy
+        if: inputs.action == 'destroy'
+        env:
+          TF_VAR_app_unique_id: ${{ vars.APP_UNIQUE_ID }}
+          TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+          TF_VAR_frontend_url: ${{ vars.FRONTEND_URL }}
+          TF_VAR_backend_url: ${{ vars.BACKEND_URL }}
+          TF_VAR_database_password: ${{ secrets.TF_VAR_database_password }}
+          TF_VAR_image_tag: ${{ vars.IMAGE_TAG || 'latest' }}
+          TF_VAR_aws_tf_state_bucket: ${{ vars.AWS_TF_STATE_BUCKET }}
+          TF_VAR_aws_tf_state_region: ${{ vars.AWS_TF_STATE_REGION }}
+        run: terraform -chdir=iac/aws/ephemeral destroy -auto-approve -input=false

@@ -1,0 +1,46 @@
+name: Build & publish backend image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'Dockerfiles.d/backend-build/**'
+      - 'iac/aws/*'
+      - '.github/workflows/backend.build.yaml'
+      - '.github/workflows/_reusable-backend-build.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'Dockerfiles.d/backend-build/**'
+      - 'iac/aws/*'
+      - '.github/workflows/backend.build.yaml'
+      - '.github/workflows/_reusable-backend-build.yaml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: Staging
+        type: environment
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  staging:
+    uses: ./.github/workflows/_reusable-backend-build.yaml
+    with:
+      environment: Staging
+    secrets: inherit
+
+  production:
+    needs: staging
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'Production'
+    uses: ./.github/workflows/_reusable-backend-build.yaml
+    with:
+      environment: Production
+    secrets: inherit

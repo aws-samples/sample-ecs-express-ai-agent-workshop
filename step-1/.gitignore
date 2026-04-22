@@ -1,0 +1,16 @@
+# Environment
+*.env
+!.example.*
+
+# macOS
+.DS_Store
+
+# Node.js / pnpm
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+
+# VSCode
+.vscode/

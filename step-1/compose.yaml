@@ -1,0 +1,54 @@
+services:
+  web:
+    build:
+      context: ./web/app
+      dockerfile: ../../Dockerfiles.d/web/Dockerfile
+      args:
+        GID: "${GID:-1000}"
+        UID: "${UID:-1000}"
+    command:
+      - sh
+      - -c
+      - |
+        pnpm install
+        pnpm dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/work
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "const n=require('net');const s=n.createConnection(3000,'localhost');s.on('connect',()=>{s.destroy();process.exit(0)});s.on('error',()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    working_dir: /work/web/app
+
+  web-e2e-tests:
+    build:
+      context: ./web/e2e-tests
+      dockerfile: ../../Dockerfiles.d/web-e2e-tests/Dockerfile
+      args:
+        GID: "${GID:-1000}"
+        UID: "${UID:-1000}"
+    command:
+      - sh
+      - -c
+      - |
+        pnpm install
+        pnpm test
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      BASE_URL: http://web:3000
+      CI: ${CI:-}
+    profiles:
+      - e2e-tests
+    volumes:
+      - .:/work
+    working_dir: /work/web/e2e-tests

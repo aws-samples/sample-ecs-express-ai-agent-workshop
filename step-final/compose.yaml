@@ -1,0 +1,185 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfiles.d/backend/Dockerfile
+      args:
+        GID: "${GID:-1000}"
+        UID: "${UID:-1000}"
+    command:
+      - sh
+      - -c
+      - |
+        export GIT_SHA=$(git -C /work rev-parse --short HEAD 2>/dev/null || echo undefined)
+        npm-check-updates --upgrade
+        sort-package-json
+        pnpm install
+        pnpm audit --fix
+        pnpm install
+        pnpm exec prisma generate
+        pnpm exec prisma db push --accept-data-loss
+        pnpm dev
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    env_file:
+      - .secrets.env
+      - .env
+    environment:
+      # Point the pnpm store to the bind-mounted volume so it persists across
+      # container rebuilds and is shared between backend and web containers.
+      PNPM_HOME: /work/.pnpm-store
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "const n=require('net');const s=n.createConnection(4000,'localhost');s.on('connect',()=>{s.destroy();process.exit(0)});s.on('error',()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/work
+    working_dir: /work/backend
+
+  db:
+    environment:
+      POSTGRES_DB: localauth
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    image: postgres:17-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  iac:
+    build:
+      context: ./iac
+      dockerfile: ../Dockerfiles.d/iac/Dockerfile
+      args:
+        GID: "${GID:-1000}"
+        UID: "${UID:-1000}"
+    environment:
+      AWS_PROFILE: ${AWS_PROFILE:-}
+      TF_VAR_app_unique_id: ${APP_UNIQUE_ID}
+      TF_VAR_aws_region: ${AWS_REGION}
+      TF_VAR_aws_tf_state_bucket: ${AWS_TF_STATE_BUCKET}
+      TF_VAR_aws_tf_state_region: ${AWS_TF_STATE_REGION}
+      TF_VAR_apple_client_id: ${AUTH_APPLE_CLIENT_ID}
+      TF_VAR_apple_team_id: ${AUTH_APPLE_TEAM_ID}
+      TF_VAR_apple_key_id: ${AUTH_APPLE_KEY_ID}
+      TF_VAR_discord_client_id: ${AUTH_DISCORD_CLIENT_ID}
+      TF_VAR_gh_client_id: ${AUTH_GITHUB_CLIENT_ID}
+      TF_VAR_google_oauth_client_id: ${AUTH_GOOGLE_CLIENT_ID}
+      TF_VAR_twitter_client_id: ${AUTH_TWITTER_CLIENT_ID}
+      TF_VAR_frontend_url: ${FRONTEND_URL:-}
+      TF_VAR_backend_url: ${BACKEND_URL:-}
+      TF_VAR_image_tag: ${IMAGE_TAG:-latest}
+      TF_VAR_native_app_url_scheme: ${NATIVE_APP_URL_SCHEME}
+      TF_VAR_smtp_host: ${SMTP_HOST:-mailpit}
+      TF_VAR_smtp_port: ${SMTP_PORT:-1025}
+      TF_VAR_smtp_secure: ${SMTP_SECURE:-false}
+      TF_VAR_smtp_user: ${SMTP_USER:-}
+      TF_VAR_smtp_from: ${SMTP_FROM:-noreply@localhost}
+    profiles:
+      - iac
+    volumes:
+      - .:/work
+      - ~/.aws:/mnt/.aws:ro
+    working_dir: /work/iac
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+  web:
+    build:
+      context: ./web/app
+      dockerfile: ../../Dockerfiles.d/web/Dockerfile
+      args:
+        GID: "${GID:-1000}"
+        UID: "${UID:-1000}"
+    command:
+      - sh
+      - -c
+      - |
+        npm-check-updates --upgrade
+        sort-package-json
+        pnpm install
+        pnpm audit --fix
+        pnpm install
+        pnpm dev
+    depends_on:
+      backend:
+        condition: service_healthy
+    env_file:
+      - .secrets.env
+      - .env
+    environment:
+      BACKEND_URL: http://backend:4000
+      # Point the pnpm store to the bind-mounted volume so it persists across
+      # container rebuilds and is shared between backend and web containers.
+      PNPM_HOME: /work/.pnpm-store
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "const n=require('net');const s=n.createConnection(3000,'localhost');s.on('connect',()=>{s.destroy();process.exit(0)});s.on('error',()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/work
+    working_dir: /work/web/app
+
+  web-e2e-tests:
+    build:
+      context: ./web/e2e-tests
+      dockerfile: ../../Dockerfiles.d/web-e2e-tests/Dockerfile
+      args:
+        GID: "${GID:-1000}"
+        UID: "${UID:-1000}"
+    command:
+      - sh
+      - -c
+      - |
+        npm-check-updates --upgrade
+        sort-package-json
+        pnpm install
+        pnpm audit --fix
+        pnpm install
+        pnpm test
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      BASE_URL: http://web:3000
+      BACKEND_URL: http://backend:4000
+      MAILPIT_API_URL: http://mailpit:8025
+      CI: ${CI:-}
+      # Point the pnpm store to the bind-mounted volume so it persists across
+      # container rebuilds and is shared between backend and web containers.
+      PNPM_HOME: /work/.pnpm-store
+    profiles:
+      - e2e-tests
+    volumes:
+      - .:/work
+    working_dir: /work/web/e2e-tests
+
+volumes:
+  postgres_data:

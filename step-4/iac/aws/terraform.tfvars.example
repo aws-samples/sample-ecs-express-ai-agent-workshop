@@ -1,0 +1,3 @@
+app_unique_id = "oauth2-app"
+
+aws_region = "us-east-1"

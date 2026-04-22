@@ -1,0 +1,79 @@
+name: E2E Tests for Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'compose.yaml'
+      - 'Dockerfiles.d/backend/**'
+      - '.github/workflows/backend.e2e-tests.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'compose.yaml'
+      - 'Dockerfiles.d/backend/**'
+      - '.github/workflows/backend.e2e-tests.yaml'
+  workflow_dispatch:
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Create .env
+        run: |
+          cat <<'EOF' > .env
+          PORT=4000
+          CORS_ORIGIN=http://localhost:3000
+          AUTH_JWT_ACCESS_EXPIRATION=15m
+          AUTH_JWT_REFRESH_EXPIRATION=7d
+          FRONTEND_URL=http://localhost:3000
+          NATIVE_APP_URL_SCHEME=oauth2app
+          AUTH_CALLBACK_BASE_URL=http://localhost:4000
+          AUTH_NATIVE_CALLBACK_BASE_URL=http://localhost:4000
+          EOF
+          # Match the container user to the runner so bind-mounted files are writable.
+          # Docker Compose auto-reads .env for build-arg interpolation (${UID:-1000}, ${GID:-1000}).
+          echo "UID=$(id -u)" >> .env
+          echo "GID=$(id -g)" >> .env
+          echo "AUTH_APPLE_CLIENT_ID=${{ vars.AUTH_APPLE_CLIENT_ID }}" >> .env
+          echo "AUTH_APPLE_TEAM_ID=${{ vars.AUTH_APPLE_TEAM_ID }}" >> .env
+          echo "AUTH_APPLE_KEY_ID=${{ vars.AUTH_APPLE_KEY_ID }}" >> .env
+          echo "AUTH_GITHUB_CLIENT_ID=${{ vars.AUTH_GITHUB_CLIENT_ID }}" >> .env
+          echo "AUTH_GOOGLE_CLIENT_ID=${{ vars.AUTH_GOOGLE_CLIENT_ID }}" >> .env
+          echo "AUTH_TWITTER_CLIENT_ID=${{ vars.AUTH_TWITTER_CLIENT_ID }}" >> .env
+          echo "AUTH_DISCORD_CLIENT_ID=${{ vars.AUTH_DISCORD_CLIENT_ID }}" >> .env
+
+      - name: Create .secrets.env
+        run: |
+          cat <<'EOF' > .secrets.env
+          DATABASE_URL=postgresql://postgres:password@db:5432/localauth
+          EOF
+          echo "AUTH_JWT_SECRET=${{ secrets.AUTH_JWT_SECRET }}" >> .secrets.env
+          echo "AUTH_JWT_REFRESH_SECRET=${{ secrets.AUTH_JWT_REFRESH_SECRET }}" >> .secrets.env
+          echo "AUTH_APPLE_PRIVATE_KEY=${{ secrets.AUTH_APPLE_PRIVATE_KEY }}" >> .secrets.env
+          echo "AUTH_GITHUB_CLIENT_SECRET=${{ secrets.AUTH_GITHUB_CLIENT_SECRET }}" >> .secrets.env
+          echo "AUTH_GOOGLE_CLIENT_SECRET=${{ secrets.AUTH_GOOGLE_CLIENT_SECRET }}" >> .secrets.env
+          echo "AUTH_TWITTER_CLIENT_SECRET=${{ secrets.AUTH_TWITTER_CLIENT_SECRET }}" >> .secrets.env
+          echo "AUTH_SESSION_SECRET=${{ secrets.AUTH_SESSION_SECRET }}" >> .secrets.env
+          echo "AUTH_DISCORD_CLIENT_SECRET=${{ secrets.AUTH_DISCORD_CLIENT_SECRET }}" >> .secrets.env
+
+      - name: Build backend image
+        run: docker compose build backend
+
+      - name: Run E2E tests
+        run: |
+          docker compose run --rm backend sh -c "\
+            pnpm install && \
+            pnpm exec prisma generate && \
+            pnpm exec prisma db push --accept-data-loss && \
+            pnpm test:e2e"
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
