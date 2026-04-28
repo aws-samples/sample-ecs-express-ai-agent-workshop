@@ -3,10 +3,11 @@
 ## 1. Set up environment variables
 
 ```sh
+cp .example.env .env
 cp .example.secrets.env .secrets.env
 ```
 
-Edit `.secrets.env` and replace placeholders. See [.example.secrets.env](../.example.secrets.env) for all variables.
+Edit `.env` and `.secrets.env` and replace placeholders. See [.example.env](../.example.env) and [.example.secrets.env](../.example.secrets.env) for all variables.
 
 **Docker Engine only (not Docker Desktop)** — set UID/GID so bind-mounted files are owned by your user:
 

@@ -9,8 +9,8 @@ ARG UID=1000
 ARG GID=1000
 # Create a user matching the host user's UID/GID so that files written to
 # bind-mounted volumes (e.g. .terraform/) are owned by the correct user.
-RUN addgroup -g ${GID} developer \
-    && adduser -u ${UID} -G developer -D developer
+RUN groupadd --force --gid ${GID} developer \
+    && useradd --uid ${UID} --gid ${GID} --create-home developer
 
 # Cloud credentials are bind-mounted read-only under /mnt. On macOS
 # Docker Desktop they appear as root-owned with restrictive permissions,

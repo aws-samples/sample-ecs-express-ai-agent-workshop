@@ -9,7 +9,6 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2021",
     "sourceMap": true,
-    "rootDir": ".",
     "outDir": "./dist",
     "skipLibCheck": true,
     "strictNullChecks": false,
