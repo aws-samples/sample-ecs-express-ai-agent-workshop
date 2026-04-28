@@ -1,6 +1,6 @@
 # step-1 を step-2 に成長させるプロンプト
 
-以下のプロンプトを順番に AI エージェントに渡して、この空の Next.js アプリを AWS ECS Express Mode にデプロイ可能なプロジェクトに進化させます。
+以下のプロンプトを順番に AI エージェントに渡して、この空の Next.js アプリを Amazon ECS Express Mode にデプロイ可能なプロジェクトに進化させます。
 
 ## 1. Web アプリの本番用 Dockerfile を追加
 
@@ -56,7 +56,7 @@ Terraform 用の GitHub Actions ワークフローを作成してください：
 
 ## 10. クラウドデプロイドキュメントを追加
 
-AWS ECS Express Mode へのデプロイに関するドキュメントを作成してください：
+Amazon ECS Express Mode へのデプロイに関するドキュメントを作成してください：
 - `docs/cloud-deployment.md` — デプロイアーキテクチャの概要（永続 + エフェメラルレイヤー）
 - `docs/cloud-deployment-aws.md` — AWS デプロイのステップバイステップガイド（state バケット作成、tfvars 設定、永続レイヤー apply、イメージ push、エフェメラルレイヤー apply）
 - `docs/ci.md` — CI/CD ワークフロー概要、必要な GitHub Actions 変数とシークレット

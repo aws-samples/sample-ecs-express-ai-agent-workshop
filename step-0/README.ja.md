@@ -12,7 +12,7 @@
 このディレクトリの [prompts.ja.md](prompts.ja.md) の内容をコピーして AI エージェント（[Claude Code](https://claude.ai/claude-code)、[Cursor](https://www.cursor.com/)、[GitHub Copilot](https://github.com/features/copilot)、[ChatGPT](https://chatgpt.com/) など）に渡してください。正しく実行されれば、手動の作業なしで step-1 と同等の環境が構築されます。
 
 <details>
-<summary><strong>用語解説：Next.js、E2E テスト、コンテナ、Docker、Docker Compose（クリックで展開）</strong></summary>
+<summary><strong>用語解説：Next.js、E2E テスト（クリックで展開）</strong></summary>
 
 **Next.js とは？**
 
@@ -21,6 +21,11 @@
 **E2E テストとは？**
 
 E2E（エンドツーエンド）テストは、アプリケーションに対する実際のユーザー操作をシミュレートします — ブラウザを開き、ボタンをクリックし、フォームに入力し、結果を検証します。[Playwright](https://playwright.dev/) は、ブラウザ操作を自動化するモダンな E2E テストフレームワークです。E2E テストを書くことで、AI エージェントが生成したコードが期待通りに動作することを確認できます。
+
+</details>
+
+<details>
+<summary><strong>用語解説：コンテナ、Docker、Docker Compose（クリックで展開）</strong></summary>
 
 **コンテナとは？**
 
@@ -36,6 +41,45 @@ E2E（エンドツーエンド）テストは、アプリケーションに対�
 
 </details>
 
+<details>
+<summary><strong>Tips：便利な Docker Compose コマンド（クリックで展開）</strong></summary>
+
+**サービスの起動**
+
+```bash
+docker compose up          # すべてのサービスを起動（フォアグラウンド、ログ表示）
+docker compose up -d       # すべてのサービスをバックグラウンドで起動（デタッチモード）
+```
+
+**サービスの停止**
+
+```bash
+docker compose down                  # コンテナの停止と削除
+docker compose down --remove-orphans # compose.yaml に存在しないサービスのコンテナも削除
+docker compose down -v               # ボリューム（データベースデータなど）も削除
+```
+
+> `--remove-orphans` は、ステップ間を移動する際に特に便利です。各ステップで使用するサービスが異なるため、このオプションがないと前のステップのコンテナが動き続ける場合があります。
+
+> `-v` はデータベースデータなどの名前付きボリュームを削除します。クリーンな状態にしたいときに使いますが、**保存されたデータがすべて削除される**点に注意してください。
+
+**実行中のコンテナの確認**
+
+```bash
+docker compose ps   # 現在の Compose プロジェクトのコンテナを表示
+docker ps           # システム上のすべての実行中コンテナを表示
+```
+
+**ポートの競合**
+
+`port is already allocated` や `address already in use` というエラーが出た場合、前のステップのコンテナ（または別のアプリケーション）がそのポートを使用しています。以下の方法で解決できます：
+
+1. ポートの使用状況を確認：`docker ps` または `lsof -i :3000`
+2. 前のステップのコンテナを停止：`docker compose down --remove-orphans`
+3. Docker 以外のプロセスがポートを使用している場合、そのプロセスを先に停止
+
+</details>
+
 ## 完了後の期待される出力
 
 プロンプトを完了すると、step-1 と同等のプロジェクトが構築されます：
@@ -43,6 +87,12 @@ E2E（エンドツーエンド）テストは、アプリケーションに対�
 - `docker compose up` で Next.js 開発サーバーが起動
 - **http://localhost:3000** — デフォルトの Next.js「Create Next App」ランディングページ
 - `docker compose --profile=e2e-tests run --rm web-e2e-tests` — Playwright E2E テストがパス
+
+**次のステップに進む前のクリーンアップ：**
+
+```bash
+docker compose down --remove-orphans
+```
 
 ---
 

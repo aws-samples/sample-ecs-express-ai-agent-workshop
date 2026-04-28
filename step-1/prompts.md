@@ -1,6 +1,6 @@
 # Prompts to grow step-1 into step-2
 
-Use the following prompts in order with the AI agent to evolve this empty Next.js app into a deployable project on AWS ECS Express Mode.
+Use the following prompts in order with the AI agent to evolve this empty Next.js app into a deployable project on Amazon ECS Express Mode.
 
 ## 1. Add a production Dockerfile for the web app
 
@@ -56,7 +56,7 @@ Could you create `docs/oidc-setup.md` documenting how to set up AWS IAM OIDC pro
 
 ## 10. Add cloud deployment documentation
 
-Could you create documentation for deploying to AWS ECS Express Mode:
+Could you create documentation for deploying to Amazon ECS Express Mode:
 - `docs/cloud-deployment.md` — overview of the deployment architecture (persistent + ephemeral layers)
 - `docs/cloud-deployment-aws.md` — step-by-step guide for AWS deployment (create state bucket, configure tfvars, apply persistent, push images, apply ephemeral)
 - `docs/ci.md` — CI/CD workflows overview, required GitHub Actions variables and secrets

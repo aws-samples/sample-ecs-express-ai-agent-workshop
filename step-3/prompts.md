@@ -10,13 +10,13 @@ Could you add a `db` service to `compose.yaml` using `postgres:17-alpine` with d
 
 Could you create `.example.secrets.env` and `.secrets.env` with `DATABASE_URL=postgresql://postgres:password@db:5432/app` and `TF_VAR_database_password=change-me-database-password`? Add `.secrets.env` to the backend's `env_file` in `compose.yaml`.
 
-## 3. Add Prisma ORM to the backend
+## 3. Add Prisma ORM v7 to the backend
 
-Could you add `@prisma/client`, `@prisma/adapter-pg`, and `pg` as dependencies, and `prisma` as a devDependency to the backend `package.json`? Also add `class-validator` and `class-transformer` for DTO validation. Add `postinstall`, `prisma:generate`, and `prisma:push` scripts. Create a `prisma.config.mjs` that configures the schema directory as `prisma/` and reads `DATABASE_URL` from the environment.
+Could you add `@prisma/client@^7`, `@prisma/adapter-pg@^7`, and `pg` as dependencies, and `prisma@^7` as a devDependency to the backend `package.json`? Also add `class-validator` and `class-transformer` for DTO validation. Add `postinstall`, `prisma:generate`, and `prisma:push` scripts. Create a `prisma.config.mjs` using `defineConfig` from `prisma/config` that configures the schema directory as `prisma/` and reads `DATABASE_URL` from the environment.
 
 ## 4. Create the Prisma schema for Item model
 
-Could you create a multi-file Prisma schema under `backend/prisma/`? The `schema.prisma` should configure the `prisma-client` generator (output to `../src/generated/prisma`) and PostgreSQL datasource. Create `item.prisma` with an `Item` model that has `id` (cuid), `name` (String), `createdAt`, and `updatedAt` fields.
+Could you create a multi-file Prisma schema under `backend/prisma/`? The `schema.prisma` should configure the `prisma-client` generator (Prisma v7 uses `prisma-client`, not `prisma-client-js`) with output to `../src/generated/prisma` and PostgreSQL datasource. Create `item.prisma` with an `Item` model that has `id` (cuid), `name` (String), `createdAt`, and `updatedAt` fields.
 
 ## 5. Create the Prisma service and module
 

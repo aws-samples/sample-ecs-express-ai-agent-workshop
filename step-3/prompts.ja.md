@@ -10,13 +10,13 @@
 
 `.example.secrets.env` と `.secrets.env` を `DATABASE_URL=postgresql://postgres:password@db:5432/app` と `TF_VAR_database_password=change-me-database-password` で作成してください。`compose.yaml` のバックエンドの `env_file` に `.secrets.env` を追加してください。
 
-## 3. バックエンドに Prisma ORM を追加
+## 3. バックエンドに Prisma ORM v7 を追加
 
-バックエンドの `package.json` に `@prisma/client`、`@prisma/adapter-pg`、`pg` を dependencies として、`prisma` を devDependency として追加してください。DTO バリデーション用に `class-validator` と `class-transformer` も追加してください。`postinstall`、`prisma:generate`、`prisma:push` スクリプトを追加してください。スキーマディレクトリを `prisma/` に設定し環境から `DATABASE_URL` を読み取る `prisma.config.mjs` を作成してください。
+バックエンドの `package.json` に `@prisma/client@^7`、`@prisma/adapter-pg@^7`、`pg` を dependencies として、`prisma@^7` を devDependency として追加してください。DTO バリデーション用に `class-validator` と `class-transformer` も追加してください。`postinstall`、`prisma:generate`、`prisma:push` スクリプトを追加してください。`prisma/config` の `defineConfig` を使用して、スキーマディレクトリを `prisma/` に設定し環境から `DATABASE_URL` を読み取る `prisma.config.mjs` を作成してください。
 
 ## 4. Item モデルの Prisma スキーマを作成
 
-`backend/prisma/` 配下にマルチファイルの Prisma スキーマを作成してください。`schema.prisma` で `prisma-client` ジェネレーター（出力先 `../src/generated/prisma`）と PostgreSQL データソースを設定してください。`item.prisma` に `id`（cuid）、`name`（String）、`createdAt`、`updatedAt` フィールドを持つ `Item` モデルを作成してください。
+`backend/prisma/` 配下にマルチファイルの Prisma スキーマを作成してください。`schema.prisma` で `prisma-client` ジェネレーター（Prisma v7 では `prisma-client-js` ではなく `prisma-client` を使用）を出力先 `../src/generated/prisma` で設定し、PostgreSQL データソースを設定してください。`item.prisma` に `id`（cuid）、`name`（String）、`createdAt`、`updatedAt` フィールドを持つ `Item` モデルを作成してください。
 
 ## 5. Prisma サービスとモジュールを作成
 

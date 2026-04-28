@@ -1,6 +1,6 @@
 FROM node:24-bookworm-slim
 
-RUN apt-get update -y && apt-get install -y --no-install-recommends git \
+RUN apt-get update -y && apt-get install -y --no-install-recommends ca-certificates curl git netcat-openbsd \
     && rm -rf /var/lib/apt/lists/* \
     && corepack enable \
     && npm install -g npm-check-updates sort-package-json
@@ -11,7 +11,7 @@ ARG GID=1000
 # image, then create a developer user matching the host UID/GID so that files
 # written to bind-mounted volumes have correct ownership on Linux hosts.
 RUN userdel --remove node \
-    && groupadd --gid ${GID} developer \
+    && groupadd --force --gid ${GID} developer \
     && useradd --uid ${UID} --gid ${GID} --create-home developer
 
 USER developer

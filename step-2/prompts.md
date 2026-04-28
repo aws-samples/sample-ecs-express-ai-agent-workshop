@@ -10,6 +10,7 @@ Could you create a NestJS backend under `backend/` with only a health check endp
 - Include Swagger UI at `/api` (non-production only)
 - Use minimal dependencies (no database, no auth, no mail)
 - Include `nest-cli.json`, `tsconfig.json`, `tsconfig.build.json`, and `package.json`
+- Use TypeScript 6 — `tsconfig.json` must explicitly set `rootDir` (e.g. `"."`) and use `experimentalDecorators` for NestJS
 
 ## 2. Add Dockerfiles for backend (development and production)
 

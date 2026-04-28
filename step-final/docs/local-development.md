@@ -8,13 +8,13 @@ cp .example.secrets.env .secrets.env
 
 Edit `.secrets.env` and replace placeholders. See [.example.secrets.env](../.example.secrets.env) for all variables.
 
-**Linux only** — set UID/GID so bind-mounted files are owned by your user:
+**Docker Engine only (not Docker Desktop)** — set UID/GID so bind-mounted files are owned by your user:
 
 ```sh
-test $(uname -s) = 'Linux' && {
+docker info --format '{{.OperatingSystem}}' 2>/dev/null | grep -qi 'docker desktop' || {
   echo "GID=$(id -g)"
   echo "UID=$(id -u)"
-} >> .secrets.env || :
+} >> .env
 ```
 
 Run `docker compose build` after changing UID/GID.

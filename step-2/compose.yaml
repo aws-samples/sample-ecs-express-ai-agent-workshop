@@ -37,7 +37,9 @@ services:
         pnpm install
         pnpm audit --fix
         pnpm install
-        pnpm dev
+        # Run git after pnpm install so the bind-mount is ready (avoids dubious ownership on Colima)
+        export NEXT_PUBLIC_GIT_SHA=$$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
+        exec pnpm dev
     env_file:
       - .env
     environment:

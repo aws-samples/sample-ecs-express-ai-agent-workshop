@@ -3,22 +3,31 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "next dev",
+    "lint": "eslint",
+    "start": "next start"
   },
   "dependencies": {
-    "next": "16.2.2",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "next": "16.2.3",
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^25",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.2",
-    "typescript": "^5"
+    "eslint": "^10",
+    "eslint-config-next": "16.2.3",
+    "typescript": "^6"
+  },
+  "pnpm": {
+    "overrides": {
+      "next@>=16.0.1 <16.1.7": ">=16.1.7",
+      "next@>=16.0.0-beta.0 <16.2.3": ">=16.2.3",
+      "next@>=16.0.0-beta.0 <16.1.7": ">=16.1.7",
+      "next@>=10.0.0 <16.1.7": ">=16.1.7",
+      "picomatch@>=4.0.0 <4.0.4": ">=4.0.4"
+    }
   }
 }

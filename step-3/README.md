@@ -1,6 +1,6 @@
 # Step 3 — Next.js + NestJS (health check only) on ECS Express Mode
 
-Next.js frontend and a minimal NestJS backend (health check with GIT_SHA only), both deployed to AWS ECS Express Mode with Terraform IaC and CI/CD via GitHub Actions.
+Next.js frontend and a minimal NestJS backend (health check with GIT_SHA only), both deployed to Amazon ECS Express Mode with Terraform IaC and CI/CD via GitHub Actions.
 
 ## Services
 
@@ -42,28 +42,6 @@ graph TB
     ECR -->|pull images| ECS_Backend
 ```
 
-## Prerequisites
-
-- Docker Engine + Docker Compose (e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop/), [Podman](https://podman.io/), [Colima](https://github.com/abiosoft/colima))
-- A GitHub repository (optional — needed only if you want to use the GitHub Actions CI/CD workflows in `.github/`)
-
-## Quick Start
-
-```sh
-docker compose up
-```
-
-| URL | Description |
-|-----|-------------|
-| http://localhost:4000/health | Backend health check |
-| http://localhost:3000 | Web |
-
-## Run E2E Tests
-
-```sh
-docker compose --profile=e2e-tests run --rm web-e2e-tests
-```
-
 ## Project Structure
 
 ```
@@ -79,7 +57,39 @@ docker compose --profile=e2e-tests run --rm web-e2e-tests
 └── docs/
 ```
 
+## Prerequisites
+
+- Docker Engine + Docker Compose (e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop/), [Podman](https://podman.io/), [Colima](https://github.com/abiosoft/colima))
+- An AWS account with administrator access (optional — needed only if you want to deploy to the cloud)
+- A GitHub repository (optional — needed only if you want to use the GitHub Actions CI/CD workflows in `.github/`)
+
+## Run This Step
+
+```sh
+cp .example.env .env   # Edit if needed — see comments inside
+docker compose up
+```
+
+| URL | Description |
+|-----|-------------|
+| http://localhost:4000/health | Backend health check |
+| http://localhost:3000 | Web |
+
+## Run E2E Tests
+
+```sh
+docker compose --profile=e2e-tests run --rm web-e2e-tests
+```
+
 ## Cloud Deployment (Terraform)
+
+This is an ECS workshop, so we **recommend deploying to AWS** to get the full experience. All Terraform commands run via `docker compose`, so no local Terraform installation is required. If you don't have an AWS account yet, you can still proceed with local development and deploy later.
+
+> **Cost note:** ECS and related resources incur hourly charges while running. When you're done for the day, destroy the ephemeral layer to avoid unexpected costs:
+> ```sh
+> docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral destroy -var-file=terraform.tfvars
+> ```
+> You can re-create it anytime with `terraform apply`. See the top-level [README](../README.md#time--cost-estimate) for cost estimates.
 
 See [docs/cloud-deployment-aws.md](docs/cloud-deployment-aws.md) for full details. Quick summary:
 
@@ -87,6 +97,8 @@ See [docs/cloud-deployment-aws.md](docs/cloud-deployment-aws.md) for full detail
 # 1. Configure variables
 cp iac/aws/terraform.tfvars.example iac/aws/terraform.tfvars
 cp iac/aws/ephemeral/terraform.tfvars.example iac/aws/ephemeral/terraform.tfvars
+# Edit terraform.tfvars and set app_unique_id (e.g. "my-workshop")
+# APP_UNIQUE_ID is a unique prefix used for all AWS resource names (ECR repos, Secrets Manager keys, etc.)
 
 # 2. Deploy persistent infrastructure (VPC, ECR, IAM)
 source .env
@@ -95,33 +107,23 @@ docker compose --profile=iac run --rm iac terraform -chdir=aws init \
   -backend-config="region=$AWS_TF_STATE_REGION"
 docker compose --profile=iac run --rm iac terraform -chdir=aws apply -var-file=terraform.tfvars
 
-# 3. Build and push Docker images to ECR, then deploy ephemeral infrastructure (ECS Express Gateway)
-docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral init \
-  -backend-config="bucket=$AWS_TF_STATE_BUCKET" \
-  -backend-config="region=$AWS_TF_STATE_REGION"
-docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral apply -var-file=terraform.tfvars
-```
-
-### Build and Push Images
-
-After deploying the persistent layer, build and push the production images before deploying the ephemeral layer:
-
-```sh
-# Authenticate Docker with ECR
+# 3. Build and push Docker images to ECR
 aws ecr get-login-password --region $AWS_REGION | \
   docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-# Build and push backend
 docker build -f Dockerfiles.d/backend-build/Dockerfile \
   -t $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-backend:latest \
   backend
 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-backend:latest
-
-# Build and push web
 docker build -f Dockerfiles.d/web-build/Dockerfile \
   -t $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-web:latest \
   web/app
 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-web:latest
+
+# 4. Deploy ephemeral infrastructure (ECS Express Gateway)
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral init \
+  -backend-config="bucket=$AWS_TF_STATE_BUCKET" \
+  -backend-config="region=$AWS_TF_STATE_REGION"
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral apply -var-file=terraform.tfvars
 ```
 
 > See [docs/cloud-deployment-aws.md](docs/cloud-deployment-aws.md) for full details.
@@ -174,6 +176,38 @@ After completing the prompts, you should have a project equivalent to step-4 wit
   - `GET /items` — List all items → `200 OK`
   - `DELETE /items/:id` — Delete item → `204 No Content`
 - E2E tests verify creating and deleting items
+
+If you deployed to AWS, you can also access the same application from Amazon ECS. Run the following command to get the URL:
+
+```sh
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral output web_url
+```
+
+Open the output URL in your browser to confirm it works.
+
+**Cleanup before moving to the next step:**
+
+```bash
+docker compose down --remove-orphans
+```
+
+> This step uses a database volume. If you want to reset the database, use `docker compose down --remove-orphans -v` instead.
+
+<details>
+<summary><strong>Leaving the workshop? Destroy your cloud infrastructure too (Click to expand)</strong></summary>
+
+If you deployed to AWS and want to stop the workshop, destroy your cloud resources to avoid ongoing charges:
+
+```sh
+# 1. Destroy ephemeral layer (ECS, RDS, etc.)
+source .env
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral destroy -var-file=terraform.tfvars
+
+# 2. Destroy persistent layer (VPC, ECR, IAM)
+docker compose --profile=iac run --rm iac terraform -chdir=aws destroy -var-file=terraform.tfvars
+```
+
+</details>
 
 ---
 

@@ -73,7 +73,7 @@ FROM deps AS builder
 RUN pnpm build
 
 # remove dev dependencies to shrink the image (pnpm prune does this)
-RUN pnpm prune --prod
+RUN CI=true pnpm prune --prod
 
 # --- runtime stage ---------------------------------------------------------
 FROM gcr.io/distroless/nodejs24-debian12:nonroot AS runner

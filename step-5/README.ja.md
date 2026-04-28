@@ -1,6 +1,6 @@
 # Step 5 — ECS Express Mode 上の Next.js + NestJS（認証 + Items CRUD）
 
-Next.js フロントエンドと、メール/パスワード認証（JWT）およびユーザースコープの Items CRUD（PostgreSQL + Prisma）を備えた NestJS バックエンドを、AWS ECS Express Mode にデプロイします。
+Next.js フロントエンドと、メール/パスワード認証（JWT）およびユーザースコープの Items CRUD（PostgreSQL + Prisma）を備えた NestJS バックエンドを、Amazon ECS Express Mode にデプロイします。
 
 ## サービス
 
@@ -48,17 +48,39 @@ graph TB
     SM -.->|注入| ECS_Backend
 ```
 
+## プロジェクト構成
+
+```
+.
+├── compose.yaml
+├── backend/               # NestJS API（認証 + アイテム）
+│   └── prisma/            # Prisma スキーマ（User + Item モデル）
+├── web/
+│   ├── app/               # Next.js App Router
+│   └── e2e-tests/         # Playwright E2E テスト
+├── iac/                   # Terraform IaC（AWS）
+├── Dockerfiles.d/
+├── .github/               # GitHub Actions ワークフロー + カスタムアクション
+└── docs/
+```
+
 ## 前提条件
 
 - Docker Engine + Docker Compose（例: [Docker Desktop](https://www.docker.com/products/docker-desktop/)、[Podman](https://podman.io/)、[Colima](https://github.com/abiosoft/colima)）
+- 管理者権限を持つ AWS アカウント（オプション — クラウドにデプロイする場合のみ必要）
 - GitHub リポジトリ（オプション — `.github/` の GitHub Actions CI/CD ワークフローを使用する場合のみ必要）
 
-## クイックスタート
+## このステップを実行する
 
 ```sh
+cp .example.env .env               # 必要に応じて編集 — ファイル内のコメントを参照
 cp .example.secrets.env .secrets.env
 docker compose up
 ```
+
+> **セキュリティに関する注意:** 本ワークショップでは学習しやすさのためにシークレットを `.secrets.env` ファイルに配置しています。本番環境ではローカルファイルではなくシークレットマネージャー（例：AWS Secrets Manager）を使用してください。AI コーディングエージェントは作業ディレクトリ内のファイルを読み取れるため、`.secrets.env` に本番用の認証情報を絶対に入れないでください。サンプルのデフォルト値はローカル開発用で安全です。`.secrets.env` は `.gitignore` の `*.env` により Git から除外されています。
+
+> **ヒント:** OAuth2 プロバイダー（Apple、Discord、GitHub、Google、X）の設定は、このステップを試すだけなら不要です。`.example.secrets.env` のデフォルトのダミー値のままでアプリは動作します。OAuth2 サインインボタンは機能しませんが、メール/パスワードでのサインアップとサインインは OAuth2 の設定なしで利用できます。
 
 | URL | 説明 |
 |-----|------|
@@ -77,23 +99,15 @@ docker compose up
 - `GET /items` — ユーザーのアイテム一覧（JWT 必須）
 - `DELETE /items/:id` — アイテム削除（JWT 必須、所有権チェック）
 
-## プロジェクト構成
-
-```
-.
-├── compose.yaml
-├── backend/               # NestJS API（認証 + アイテム）
-│   └── prisma/            # Prisma スキーマ（User + Item モデル）
-├── web/
-│   ├── app/               # Next.js App Router
-│   └── e2e-tests/         # Playwright E2E テスト
-├── iac/                   # Terraform IaC（AWS）
-├── Dockerfiles.d/
-├── .github/               # GitHub Actions ワークフロー + カスタムアクション
-└── docs/
-```
-
 ## クラウドデプロイ（Terraform）
+
+ECS ワークショップですので、フル体験のために **AWS へのデプロイを推奨します**。Terraform コマンドはすべて `docker compose` 経由で実行するため、ホストに Terraform をインストールする必要はありません。AWS アカウントをまだお持ちでない場合は、ローカル開発で先に進めて後からデプロイすることもできます。
+
+> **コストに関する注意:** ECS および関連リソースは稼働中に時間単位で課金されます。作業が終わったら、予期しないコストを避けるためにエフェメラルレイヤーを破棄してください：
+> ```sh
+> docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral destroy -var-file=terraform.tfvars
+> ```
+> `terraform apply` でいつでも再作成できます。コスト見積もりはトップレベルの [README](../README.ja.md#所要時間--コスト見積もり) を参照してください。
 
 詳細は [docs/cloud-deployment-aws.md](docs/cloud-deployment-aws.md) を参照してください。概要：
 
@@ -101,6 +115,8 @@ docker compose up
 # 1. 変数の設定
 cp iac/aws/terraform.tfvars.example iac/aws/terraform.tfvars
 cp iac/aws/ephemeral/terraform.tfvars.example iac/aws/ephemeral/terraform.tfvars
+# terraform.tfvars を編集し、app_unique_id を設定（例: "my-workshop"）
+# APP_UNIQUE_ID は AWS リソース名（ECR リポジトリ、Secrets Manager キーなど）の一意なプレフィックスです
 
 # 2. 永続インフラのデプロイ（VPC、ECR、IAM、Secrets Manager）
 source .env
@@ -109,33 +125,23 @@ docker compose --profile=iac run --rm iac terraform -chdir=aws init \
   -backend-config="region=$AWS_TF_STATE_REGION"
 docker compose --profile=iac run --rm iac terraform -chdir=aws apply -var-file=terraform.tfvars
 
-# 3. Docker イメージをビルドして ECR にプッシュ後、エフェメラルインフラをデプロイ（ECS Express Gateway、RDS）
-docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral init \
-  -backend-config="bucket=$AWS_TF_STATE_BUCKET" \
-  -backend-config="region=$AWS_TF_STATE_REGION"
-docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral apply -var-file=terraform.tfvars
-```
-
-### イメージのビルドとプッシュ
-
-永続レイヤーのデプロイ後、エフェメラルレイヤーのデプロイ前に本番イメージをビルドしてプッシュします：
-
-```sh
-# Docker を ECR に認証
+# 3. Docker イメージをビルドして ECR にプッシュ
 aws ecr get-login-password --region $AWS_REGION | \
   docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-# Backend をビルドしてプッシュ
 docker build -f Dockerfiles.d/backend-build/Dockerfile \
   -t $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-backend:latest \
   backend
 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-backend:latest
-
-# Web をビルドしてプッシュ
 docker build -f Dockerfiles.d/web-build/Dockerfile \
   -t $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-web:latest \
   web/app
 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-web:latest
+
+# 4. エフェメラルインフラをデプロイ（ECS Express Gateway、RDS）
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral init \
+  -backend-config="bucket=$AWS_TF_STATE_BUCKET" \
+  -backend-config="region=$AWS_TF_STATE_REGION"
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral apply -var-file=terraform.tfvars
 ```
 
 ### シークレットの設定
@@ -174,6 +180,33 @@ MFA（多要素認証）は、パスワードだけでなく第二のセキュ�
 
 </details>
 
+<details>
+<summary><strong>用語解説：なぜセッションをデータベースに保存するのか？（クリックで展開）</strong></summary>
+
+**なぜメモリやローカルファイルではダメなのか？**
+
+インメモリセッション（例：JavaScript の単純な `Map`）はサーバーが再起動するたびに失われ、すべてのユーザーがログアウトされます。ローカルファイルベースのセッションも同じ問題を抱えています — 単一のサーバーインスタンスに紐づくためです。ECS のようなコンテナ環境では、コンテナはエフェメラル（一時的）であり、いつでも置き換え、スケール、再起動される可能性があります。
+
+**なぜデータベース（PostgreSQL）を使うのか？**
+
+セッションをデータベースに保存すると：
+
+- **再起動してもセッションが保持される** — コンテナを再デプロイしてもユーザーがログアウトされない
+- **複数インスタンスでセッションを共有できる** — 2 つ以上のコンテナにスケールしても、どのインスタンスでも任意のユーザーのリクエストを処理できる
+- **セッションを管理できる** — データベースクエリでセッションの一覧表示、取り消し、期限切れが可能（例：「すべてのデバイスからログアウト」）
+
+**一般的なセッションストアの選択肢：**
+
+| ストア | メリット | デメリット |
+|--------|---------|-----------|
+| **PostgreSQL**（本ワークショップ） | 既に利用可能、追加インフラ不要、クエリ対応 | インメモリストアより若干遅い |
+| **Redis / ElastiCache** | 読み書きが非常に高速、TTL 自動期限切れ | 追加インフラの管理が必要 |
+| **DynamoDB** | サーバーレス、自動スケーリング、AWS マネージド | AWS 固有、結果整合性 |
+
+本ワークショップでは、既にスタックに含まれている PostgreSQL（Prisma 経由）を使ってセッションを保存しています — 追加サービスは不要です。高トラフィックの本番アプリケーションでは、速度の面から Redis が人気の選択肢です。
+
+</details>
+
 ## 完了後の期待される出力
 
 プロンプトを完了すると、step-final と同等のプロジェクトが構築されます：
@@ -194,6 +227,38 @@ MFA（多要素認証）は、パスワードだけでなく第二のセキュ�
 - **http://localhost:8025** — Mailpit UI（ローカルメールテスト）
 - 国際化（英語 + 日本語）
 - Auth、Items、TOTP、テーマの完全な E2E テストスイート
+
+AWS にデプロイした場合は、Amazon ECS からも同じアプリケーションにアクセスできます。以下のコマンドで URL を取得してください：
+
+```sh
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral output web_url
+```
+
+出力された URL をブラウザで開いて動作を確認してください。
+
+**次のステップに進む前のクリーンアップ：**
+
+```bash
+docker compose down --remove-orphans
+```
+
+> このステップはデータベースボリュームを使用します。データベースをリセットしたい場合は、代わりに `docker compose down --remove-orphans -v` を使用してください。
+
+<details>
+<summary><strong>ワークショップから離れますか？クラウドインフラも破棄してください（クリックで展開）</strong></summary>
+
+AWS にデプロイした場合は、継続的な課金を避けるためにクラウドリソースを破棄してください：
+
+```sh
+# 1. エフェメラルレイヤーを破棄（ECS、RDS など）
+source .env
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral destroy -var-file=terraform.tfvars
+
+# 2. 永続レイヤーを破棄（VPC、ECR、IAM、Secrets Manager）
+docker compose --profile=iac run --rm iac terraform -chdir=aws destroy -var-file=terraform.tfvars
+```
+
+</details>
 
 ---
 

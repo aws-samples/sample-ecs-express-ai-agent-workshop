@@ -1,6 +1,6 @@
 # Step 3 — ECS Express Mode 上の Next.js + NestJS（ヘルスチェックのみ）
 
-Next.js フロントエンドと最小限の NestJS バックエンド（GIT_SHA 付きヘルスチェックのみ）を、Terraform IaC と GitHub Actions による CI/CD で AWS ECS Express Mode にデプロイします。
+Next.js フロントエンドと最小限の NestJS バックエンド（GIT_SHA 付きヘルスチェックのみ）を、Terraform IaC と GitHub Actions による CI/CD で Amazon ECS Express Mode にデプロイします。
 
 ## サービス
 
@@ -42,28 +42,6 @@ graph TB
     ECR -->|イメージ pull| ECS_Backend
 ```
 
-## 前提条件
-
-- Docker Engine + Docker Compose（例: [Docker Desktop](https://www.docker.com/products/docker-desktop/)、[Podman](https://podman.io/)、[Colima](https://github.com/abiosoft/colima)）
-- GitHub リポジトリ（オプション — `.github/` の GitHub Actions CI/CD ワークフローを使用する場合のみ必要）
-
-## クイックスタート
-
-```sh
-docker compose up
-```
-
-| URL | 説明 |
-|-----|------|
-| http://localhost:4000/health | バックエンドヘルスチェック |
-| http://localhost:3000 | Web |
-
-## E2E テストの実行
-
-```sh
-docker compose --profile=e2e-tests run --rm web-e2e-tests
-```
-
 ## プロジェクト構成
 
 ```
@@ -79,7 +57,39 @@ docker compose --profile=e2e-tests run --rm web-e2e-tests
 └── docs/
 ```
 
+## 前提条件
+
+- Docker Engine + Docker Compose（例: [Docker Desktop](https://www.docker.com/products/docker-desktop/)、[Podman](https://podman.io/)、[Colima](https://github.com/abiosoft/colima)）
+- 管理者権限を持つ AWS アカウント（オプション — クラウドにデプロイする場合のみ必要）
+- GitHub リポジトリ（オプション — `.github/` の GitHub Actions CI/CD ワークフローを使用する場合のみ必要）
+
+## このステップを実行する
+
+```sh
+cp .example.env .env   # 必要に応じて編集 — ファイル内のコメントを参照
+docker compose up
+```
+
+| URL | 説明 |
+|-----|------|
+| http://localhost:4000/health | バックエンドヘルスチェック |
+| http://localhost:3000 | Web |
+
+## E2E テストの実行
+
+```sh
+docker compose --profile=e2e-tests run --rm web-e2e-tests
+```
+
 ## クラウドデプロイ（Terraform）
+
+ECS ワークショップですので、フル体験のために **AWS へのデプロイを推奨します**。Terraform コマンドはすべて `docker compose` 経由で実行するため、ホストに Terraform をインストールする必要はありません。AWS アカウントをまだお持ちでない場合は、ローカル開発で先に進めて後からデプロイすることもできます。
+
+> **コストに関する注意:** ECS および関連リソースは稼働中に時間単位で課金されます。作業が終わったら、予期しないコストを避けるためにエフェメラルレイヤーを破棄してください：
+> ```sh
+> docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral destroy -var-file=terraform.tfvars
+> ```
+> `terraform apply` でいつでも再作成できます。コスト見積もりはトップレベルの [README](../README.ja.md#所要時間--コスト見積もり) を参照してください。
 
 詳細は [docs/cloud-deployment-aws.md](docs/cloud-deployment-aws.md) を参照してください。概要：
 
@@ -87,6 +97,8 @@ docker compose --profile=e2e-tests run --rm web-e2e-tests
 # 1. 変数の設定
 cp iac/aws/terraform.tfvars.example iac/aws/terraform.tfvars
 cp iac/aws/ephemeral/terraform.tfvars.example iac/aws/ephemeral/terraform.tfvars
+# terraform.tfvars を編集し、app_unique_id を設定（例: "my-workshop"）
+# APP_UNIQUE_ID は AWS リソース名（ECR リポジトリ、Secrets Manager キーなど）の一意なプレフィックスです
 
 # 2. 永続インフラのデプロイ（VPC、ECR、IAM）
 source .env
@@ -95,33 +107,23 @@ docker compose --profile=iac run --rm iac terraform -chdir=aws init \
   -backend-config="region=$AWS_TF_STATE_REGION"
 docker compose --profile=iac run --rm iac terraform -chdir=aws apply -var-file=terraform.tfvars
 
-# 3. Docker イメージをビルドして ECR にプッシュ後、エフェメラルインフラをデプロイ（ECS Express Gateway）
-docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral init \
-  -backend-config="bucket=$AWS_TF_STATE_BUCKET" \
-  -backend-config="region=$AWS_TF_STATE_REGION"
-docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral apply -var-file=terraform.tfvars
-```
-
-### イメージのビルドとプッシュ
-
-永続レイヤーのデプロイ後、エフェメラルレイヤーのデプロイ前に本番イメージをビルドしてプッシュします：
-
-```sh
-# Docker を ECR に認証
+# 3. Docker イメージをビルドして ECR にプッシュ
 aws ecr get-login-password --region $AWS_REGION | \
   docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-# Backend をビルドしてプッシュ
 docker build -f Dockerfiles.d/backend-build/Dockerfile \
   -t $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-backend:latest \
   backend
 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-backend:latest
-
-# Web をビルドしてプッシュ
 docker build -f Dockerfiles.d/web-build/Dockerfile \
   -t $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-web:latest \
   web/app
 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${APP_UNIQUE_ID}-web:latest
+
+# 4. エフェメラルインフラをデプロイ（ECS Express Gateway）
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral init \
+  -backend-config="bucket=$AWS_TF_STATE_BUCKET" \
+  -backend-config="region=$AWS_TF_STATE_REGION"
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral apply -var-file=terraform.tfvars
 ```
 
 > 詳細は [docs/cloud-deployment-aws.md](docs/cloud-deployment-aws.md) を参照してください。
@@ -174,6 +176,38 @@ ORM（オブジェクトリレーショナルマッピング）は、生の SQL 
   - `GET /items` — 全アイテム一覧 → `200 OK`
   - `DELETE /items/:id` — アイテム削除 → `204 No Content`
 - E2E テストでアイテムの作成と削除を検証
+
+AWS にデプロイした場合は、Amazon ECS からも同じアプリケーションにアクセスできます。以下のコマンドで URL を取得してください：
+
+```sh
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral output web_url
+```
+
+出力された URL をブラウザで開いて動作を確認してください。
+
+**次のステップに進む前のクリーンアップ：**
+
+```bash
+docker compose down --remove-orphans
+```
+
+> このステップはデータベースボリュームを使用します。データベースをリセットしたい場合は、代わりに `docker compose down --remove-orphans -v` を使用してください。
+
+<details>
+<summary><strong>ワークショップから離れますか？クラウドインフラも破棄してください（クリックで展開）</strong></summary>
+
+AWS にデプロイした場合は、継続的な課金を避けるためにクラウドリソースを破棄してください：
+
+```sh
+# 1. エフェメラルレイヤーを破棄（ECS、RDS など）
+source .env
+docker compose --profile=iac run --rm iac terraform -chdir=aws/ephemeral destroy -var-file=terraform.tfvars
+
+# 2. 永続レイヤーを破棄（VPC、ECR、IAM）
+docker compose --profile=iac run --rm iac terraform -chdir=aws destroy -var-file=terraform.tfvars
+```
+
+</details>
 
 ---
 

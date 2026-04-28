@@ -17,24 +17,6 @@ graph LR
     E2E -.->|tests| Web
 ```
 
-## Prerequisites
-
-- Docker Engine + Docker Compose (e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop/), [Podman](https://podman.io/), [Colima](https://github.com/abiosoft/colima))
-
-## Quick Start
-
-```sh
-docker compose up
-```
-
-Open http://localhost:3000 to see the default Next.js page.
-
-## Run E2E Tests
-
-```sh
-docker compose --profile=e2e-tests run --rm web-e2e-tests
-```
-
 ## Project Structure
 
 ```
@@ -48,6 +30,25 @@ docker compose --profile=e2e-tests run --rm web-e2e-tests
     └── e2e-tests/         # Playwright E2E tests
 ```
 
+## Prerequisites
+
+- Docker Engine + Docker Compose (e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop/), [Podman](https://podman.io/), [Colima](https://github.com/abiosoft/colima))
+
+## Run This Step
+
+```sh
+cp .example.env .env   # Edit if needed — see comments inside
+docker compose up
+```
+
+Open http://localhost:3000 to see the default Next.js page.
+
+## Run E2E Tests
+
+```sh
+docker compose --profile=e2e-tests run --rm web-e2e-tests
+```
+
 ## Implementation via AI Agent
 
 To prepare for the next step (step-2), you can have an AI agent (such as [Claude Code](https://claude.ai/claude-code), [Cursor](https://www.cursor.com/), [GitHub Copilot](https://github.com/features/copilot), or [ChatGPT](https://chatgpt.com/)) generate the code for you.
@@ -59,7 +60,7 @@ Copy the contents of [prompts.md](prompts.md) in this directory and provide them
 > - Configure GitHub Actions variables and secrets — see [step-2 docs/ci.md](../step-2/docs/ci.md)
 
 <details>
-<summary><strong>Glossary: Container Registry, ECR, ECS, IaC, CI/CD (Click to expand)</strong></summary>
+<summary><strong>Glossary: Container Registry, ECR, ECS (Click to expand)</strong></summary>
 
 **What is a Container Registry?**
 
@@ -72,6 +73,11 @@ A container registry is a storage service for container images. After you build 
 **What is Amazon ECS?**
 
 [Amazon ECS (Elastic Container Service)](https://aws.amazon.com/ecs/) is AWS's managed service for running containers in the cloud. [ECS Express Mode](https://aws.amazon.com/blogs/containers/introducing-amazon-ecs-express/) simplifies deployment further by automatically provisioning load balancers, networking, and auto-scaling — letting you go from a Docker image to a production URL with minimal configuration.
+
+</details>
+
+<details>
+<summary><strong>Glossary: IaC, CI/CD (Click to expand)</strong></summary>
 
 **What is IaC (Infrastructure as Code)?**
 
@@ -92,6 +98,12 @@ After completing the prompts, you should have a project equivalent to step-2 wit
 - A production Dockerfile for web (`Dockerfiles.d/web-build/`)
 - Cloud deployment documentation under `docs/`
 - Local development still works: `docker compose up` → http://localhost:3000
+
+**Cleanup before moving to the next step:**
+
+```bash
+docker compose down --remove-orphans
+```
 
 ---
 

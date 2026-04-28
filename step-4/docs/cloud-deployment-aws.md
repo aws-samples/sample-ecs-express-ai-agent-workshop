@@ -1,4 +1,4 @@
-# AWS ECS Express Mode
+# Amazon ECS Express Mode
 
 See [Cloud Deployment](cloud-deployment.md) for production image builds and architecture overview.
 

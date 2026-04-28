@@ -17,24 +17,6 @@ graph LR
     E2E -.->|テスト| Web
 ```
 
-## 前提条件
-
-- Docker Engine + Docker Compose（例: [Docker Desktop](https://www.docker.com/products/docker-desktop/)、[Podman](https://podman.io/)、[Colima](https://github.com/abiosoft/colima)）
-
-## クイックスタート
-
-```sh
-docker compose up
-```
-
-http://localhost:3000 を開くと、デフォルトの Next.js ページが表示されます。
-
-## E2E テストの実行
-
-```sh
-docker compose --profile=e2e-tests run --rm web-e2e-tests
-```
-
 ## プロジェクト構成
 
 ```
@@ -48,6 +30,25 @@ docker compose --profile=e2e-tests run --rm web-e2e-tests
     └── e2e-tests/         # Playwright E2E テスト
 ```
 
+## 前提条件
+
+- Docker Engine + Docker Compose（例: [Docker Desktop](https://www.docker.com/products/docker-desktop/)、[Podman](https://podman.io/)、[Colima](https://github.com/abiosoft/colima)）
+
+## このステップを実行する
+
+```sh
+cp .example.env .env   # 必要に応じて編集 — ファイル内のコメントを参照
+docker compose up
+```
+
+http://localhost:3000 を開くと、デフォルトの Next.js ページが表示されます。
+
+## E2E テストの実行
+
+```sh
+docker compose --profile=e2e-tests run --rm web-e2e-tests
+```
+
 ## AI エージェントによる実装
 
 次のステップ（step-2）に進むために、AI エージェント（[Claude Code](https://claude.ai/claude-code)、[Cursor](https://www.cursor.com/)、[GitHub Copilot](https://github.com/features/copilot)、[ChatGPT](https://chatgpt.com/) など）にコードを生成させることができます。
@@ -59,7 +60,7 @@ docker compose --profile=e2e-tests run --rm web-e2e-tests
 > - GitHub Actions の変数とシークレットを設定 — [step-2 docs/ci.md](../step-2/docs/ci.md) を参照
 
 <details>
-<summary><strong>用語解説：コンテナレジストリ、ECR、ECS、IaC、CI/CD（クリックで展開）</strong></summary>
+<summary><strong>用語解説：コンテナレジストリ、ECR、ECS（クリックで展開）</strong></summary>
 
 **コンテナレジストリとは？**
 
@@ -72,6 +73,11 @@ docker compose --profile=e2e-tests run --rm web-e2e-tests
 **Amazon ECS とは？**
 
 [Amazon ECS（Elastic Container Service）](https://aws.amazon.com/ecs/) は、クラウドでコンテナを実行するための AWS のマネージドサービスです。[ECS Express Mode](https://aws.amazon.com/blogs/containers/introducing-amazon-ecs-express/) は、ロードバランサー、ネットワーキング、オートスケーリングを自動的にプロビジョニングすることでデプロイをさらに簡素化し、最小限の設定で Docker イメージから本番 URL まで構築できます。
+
+</details>
+
+<details>
+<summary><strong>用語解説：IaC、CI/CD（クリックで展開）</strong></summary>
 
 **IaC（Infrastructure as Code）とは？**
 
@@ -92,6 +98,12 @@ CI/CD（継続的インテグレーション / 継続的デプロイ）は、コ
 - Web 用本番 Dockerfile（`Dockerfiles.d/web-build/`）
 - `docs/` 配下にクラウドデプロイドキュメント
 - ローカル開発は引き続き動作：`docker compose up` → http://localhost:3000
+
+**次のステップに進む前のクリーンアップ：**
+
+```bash
+docker compose down --remove-orphans
+```
 
 ---
 

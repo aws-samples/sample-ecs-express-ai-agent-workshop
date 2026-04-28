@@ -1,10 +1,14 @@
-# ECS Express AI Agent ワークショップ
+# Amazon ECS Express AI Agent Workshop
 
-Next.js、NestJS、Prisma アプリケーションを AI エージェント（[Claude Code](https://claude.ai/claude-code) など）を使って AWS ECS 上で開発するハンズオンワークショップです。
+AI（Claude Code 等）と対話しながら、Next.js、NestJS、Prisma、そして Amazon ECS (Express Mode) を組み合わせたプロダクションレディなフルスタックアプリを構築する、実践的なワークショップです。
 
 単なるチュートリアルにとどまらず、最終的に構築するアプリケーションは、堅牢なユーザー認証の実装や OAuth2 Identity Provider（IdP）とのシームレスな連携が可能な、本番環境にも対応できる基盤となります。
 
+実現したいアプリのアイデアがありますか？それとも Next.js や AWS クラウドインフラのスキルを磨きたいですか？どちらの場合でも、このワークショップはプロダクションレディな基盤と、そこに素早くたどり着くための AI 駆動ワークフローを提供します。
+
 各 `step-*` ディレクトリはプロジェクトの自己完結型スナップショットです。各ステップの `prompts.ja.md` に従って AI エージェントにコードの記述、インフラのプロビジョニング、プロジェクトの進化を指示し、モダンな AI 駆動の開発ワークフローを体験しましょう。
+
+![Screen Recording](docs/images/screen-recording.gif)
 
 ## 技術スタックと選定理由
 
@@ -50,6 +54,10 @@ Next.js、NestJS、Prisma アプリケーションを AI エージェント（[C
 * **所要時間：** 2 〜 3 時間
 * **AWS コスト見積もり：** 5 ドル未満（ワークショップ終了後すぐにエフェメラルレイヤーを破棄した場合。**注意：** RDS と ECS は稼働中に時間単位で課金されます。）
 
+> **休憩を取りましょう！** このワークショップは内容が濃く、多くのトピックをカバーします。一気にすべてを終わらせようとしないでください。ステップの間に休憩を取り、体を伸ばし、リフレッシュしましょう。いつでも任意のステップで中断し、後から再開できます — 各ステップディレクトリは自己完結型のスナップショットなので、進捗が失われることはありません。リフレッシュした頭で取り組むことが、より良い学習成果につながります。
+
+> **学習効果を最大化しましょう！** このワークショップを最大限に活用するために、AI の処理を待っている間に `prompts.md` や生成されたコードを読むことを強くおすすめします。AI が*何を*構築しているのか、*なぜ*そうしているのかを理解することは、最終的な成果物と同じくらい価値があります。すべてを一度に終わらせる必要はありません — 自分のペースでじっくり進めてください。
+
 ## 前提条件
 
 * **知識：** TypeScript と Docker の基本的な理解。AWS や Terraform の深い専門知識は不要です（AI がサポートします！）。
@@ -60,10 +68,20 @@ Next.js、NestJS、Prisma アプリケーションを AI エージェント（[C
 
 ## 使い方
 
+本ワークショップでは、AIエージェントにコードを生成させながらプロジェクトを進化させていきます。あなた自身の変更履歴を残すため、まずは右上の **"Fork"** ボタンからこのリポジトリを自分の GitHub アカウントへコピーし、それをローカルに `clone` してスタートしてください。
+
+```bash
+# YOUR_USERNAME をご自身の GitHub アカウント名に置き換えて実行してください
+git clone https://github.com/YOUR_USERNAME/sample-ecs-express-ai-agent-workshop.git
+cd sample-ecs-express-ai-agent-workshop
+```
+
 1. ステップディレクトリを選択（`step-0/` から開始）
-2. AI エージェントで開く
-3. `prompts.ja.md` のプロンプトに従って次のステップに向けてビルド
-4. 結果を次のステップディレクトリと比較
+2. ステップの `README.md` と `prompts.ja.md` を読んでゴールを把握
+3. `docker compose up` で実際に動かしてみる
+4. AI エージェントで開く
+5. `prompts.ja.md` のプロンプトに従って次のステップに向けてビルド
+6. 結果を次のステップディレクトリと比較
 
 ## オプション学習パス：自分のリポジトリでゼロから構築
 
@@ -80,9 +98,14 @@ Next.js、NestJS、Prisma アプリケーションを AI エージェント（[C
 
 大規模言語モデル（LLM）は非決定的であるため、生成されるコードは実行ごとにわずかに異なり、エラーが発生することもあります。これは AI 駆動開発における自然で想定された現象です。行き詰まった場合は、以下の方法を試してください：
 
-1. **エラーを AI にフィードバックする（自己修復）** — バグやエラーが発生してもパニックにならないでください。エラーログやターミナル出力をコピーして AI エージェントに貼り付け、「このエラーを修正して」と依頼しましょう。AI にコンテキストを理解させ、自らのミスをトラブルシュートさせることは、非常に価値のあるスキルであり、この学習体験の核心です。
+1. **エラーを AI にフィードバックする（自己修復）** — バグやエラーが発生してもパニックにならないでください。エラーログやターミナル出力をコピーして AI エージェントに貼り付け、「このエラーを修正して」と依頼しましょう。エラーのスクリーンショットを貼り付けることもできます — 最近の AI エージェントは画像も理解できます。AI にコンテキストを理解させ、自らのミスをトラブルシュートさせることは、非常に価値のあるスキルであり、この学習体験の核心です。
 
 2. **動作するスナップショットから再開する（エスケープハッチ）** — AI がループに陥ったり、コードが修復困難なほど壊れた場合は、組み込みのエスケープハッチがあります。ローカルの変更を破棄する（例：`git checkout .`）か、次の `step-*` ディレクトリに直接移動してください。各ステップディレクトリは正しく実装されたプロジェクトの自己完結型スナップショットなので、いつでも正常な状態からワークショップを安全に再開できます。
+
+3. **AI のトークンが不足した場合** — 本ワークショップでは大量のコード生成を行うため、特に後半のステップでは多くのトークンを消費する可能性があります。プランの使用量制限に達した場合：
+   - **[Claude Max プラン](https://claude.ai/upgrade)** — Claude Code の使用量上限が大幅に引き上げられます。
+   - **[Claude Code with Amazon Bedrock](https://docs.anthropic.com/en/docs/claude-code/bedrock)** — AWS アカウントを使って Bedrock 経由で Claude を直接呼び出せます。従量課金制でトークン上限がありません。本ワークショップで既に AWS アカウントをお持ちの方に最適です。
+   - **ステップスナップショットを活用** — いつでも次の `step-*` ディレクトリにスキップして、動作する状態から続けることができます。
 
 ## ステップ
 
@@ -105,7 +128,7 @@ Next.js、NestJS、Prisma アプリケーションを AI エージェント（[C
 
 ### [step-2](step-2/README.ja.md) — ECS Express Mode 上の Next.js
 
-Next.js アプリに、AWS ECS Express Mode へデプロイするための Terraform IaC と GitHub Actions による CI/CD が含まれています。フロントエンドのみで、バックエンドやデータベースはありません。
+Next.js アプリに、Amazon ECS Express Mode へデプロイするための Terraform IaC と GitHub Actions による CI/CD が含まれています。フロントエンドのみで、バックエンドやデータベースはありません。
 
 **step-1 からの追加内容:**
 - Terraform IaC（永続: VPC、ECR、IAM；エフェメラル: ECS Express Gateway）
@@ -117,7 +140,7 @@ Next.js アプリに、AWS ECS Express Mode へデプロイするための Terra
 
 ### [step-3](step-3/README.ja.md) — ECS Express Mode 上の Next.js + NestJS（ヘルスチェック）
 
-Next.js フロントエンドと最小限の NestJS バックエンド（GIT_SHA 付きヘルスチェックと Swagger）を、AWS ECS Express Mode にデプロイします。
+Next.js フロントエンドと最小限の NestJS バックエンド（GIT_SHA 付きヘルスチェックと Swagger）を、Amazon ECS Express Mode にデプロイします。
 
 **step-2 からの追加内容:**
 - NestJS 11 バックエンド（`GET /health` エンドポイント、Git SHA を返す）
@@ -130,7 +153,7 @@ Next.js フロントエンドと最小限の NestJS バックエンド（GIT_SHA
 
 ### [step-4](step-4/README.ja.md) — ECS Express Mode 上の Next.js + NestJS（Items CRUD）
 
-Next.js フロントエンドと、ヘルスチェックおよび Items CRUD（PostgreSQL + Prisma）を備えた NestJS バックエンドを、AWS ECS Express Mode にデプロイします。
+Next.js フロントエンドと、ヘルスチェックおよび Items CRUD（PostgreSQL + Prisma）を備えた NestJS バックエンドを、Amazon ECS Express Mode にデプロイします。
 
 **step-3 からの追加内容:**
 - PostgreSQL 17 データベース
@@ -145,7 +168,7 @@ Next.js フロントエンドと、ヘルスチェックおよび Items CRUD（P
 
 ### [step-5](step-5/README.ja.md) — ECS Express Mode 上の Next.js + NestJS（認証 + Items CRUD）
 
-Next.js フロントエンドと、メール/パスワード認証（JWT）およびユーザースコープの Items CRUD（PostgreSQL + Prisma）を備えた NestJS バックエンドを、AWS ECS Express Mode にデプロイします。
+Next.js フロントエンドと、メール/パスワード認証（JWT）およびユーザースコープの Items CRUD（PostgreSQL + Prisma）を備えた NestJS バックエンドを、Amazon ECS Express Mode にデプロイします。
 
 **step-4 からの追加内容:**
 - メール/パスワードによるサインアップ・サインイン（JWT トークン）
@@ -199,10 +222,6 @@ Next.js フロントエンドと、メール/パスワード認証（JWT）お�
 
 > **注意：** エフェメラルレイヤーを破棄すると、DB 内のすべてのデータが完全に削除されます。これは「使い捨て環境」のコンセプトを採用した、本ワークショップの意図的な設計です。
 
-## Security
+## ライセンス
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
-
-## License
-
-This library is licensed under the MIT-0 License. See the LICENSE file.
+[MIT](LICENSE)

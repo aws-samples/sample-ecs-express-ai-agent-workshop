@@ -10,6 +10,7 @@
 - `/api` に Swagger UI を含める（非本番環境のみ）
 - 最小限の依存関係を使用（データベースなし、認証なし、メールなし）
 - `nest-cli.json`、`tsconfig.json`、`tsconfig.build.json`、`package.json` を含める
+- TypeScript 6 を使用 — `tsconfig.json` で `rootDir`（例: `"."`）を明示的に設定し、NestJS 用に `experimentalDecorators` を使用すること
 
 ## 2. バックエンドの Dockerfile を追加（開発用と本番用）
 

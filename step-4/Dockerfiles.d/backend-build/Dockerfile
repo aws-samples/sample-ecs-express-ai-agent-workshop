@@ -22,7 +22,7 @@ RUN pnpm prisma:generate
 # --- build stage -----------------------------------------------------------
 FROM deps AS builder
 
-RUN pnpm build && pnpm prune --prod
+RUN pnpm build && CI=true pnpm prune --prod
 
 # --- runtime stage ---------------------------------------------------------
 FROM gcr.io/distroless/nodejs24-debian12:nonroot AS runner

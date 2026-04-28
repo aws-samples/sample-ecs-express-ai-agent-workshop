@@ -71,4 +71,4 @@ docker compose --env-file .staging.env --env-file .staging.secrets.env \
 
 ## Provider guide
 
-- [AWS ECS Express Mode](cloud-deployment-aws.md)
+- [Amazon ECS Express Mode](cloud-deployment-aws.md)

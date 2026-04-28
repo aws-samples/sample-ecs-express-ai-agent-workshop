@@ -1,10 +1,14 @@
-# ECS Express AI Agent Workshop
+# Amazon ECS Express AI Agent Workshop
 
-A hands-on workshop for developing a Next.js, NestJS, and Prisma application on AWS ECS using an AI agent (such as [Claude Code](https://claude.ai/claude-code)).
+A hands-on workshop where you collaborate with AI (Claude Code, etc.) to build a production-ready full-stack application combining Next.js, NestJS, Prisma, and Amazon ECS (Express Mode).
 
-Beyond a simple tutorial, the final application you build serves as a production-ready foundation, fully capable of implementing robust user authentication and seamlessly linking with OAuth2 Identity Providers (IdPs).
+Beyond a simple tutorial, the final application serves as a production-ready foundation with robust user authentication and seamless OAuth2 Identity Provider (IdP) integration.
 
-Each `step-*` directory is a self-contained project snapshot. Use the `prompts.md` in each step to guide the AI agent to write code, provision infrastructure, and evolve the project to the next level — allowing you to experience a modern, AI-driven development workflow firsthand.
+Do you have a specific app idea you want to bring to life? Or are you simply eager to level up your skills in Next.js and AWS cloud infrastructure? Either way, this workshop gives you a production-ready foundation and the AI-driven workflow to get there fast.
+
+Each `step-*` directory is a self-contained project snapshot. Use the `prompts.md` in each step to guide the AI agent to write code, provision infrastructure, and evolve the project to the next level — experiencing a modern, AI-driven development workflow firsthand.
+
+![Screen Recording](docs/images/screen-recording.gif)
 
 ## Tech Stack & Why We Chose Them
 
@@ -50,6 +54,10 @@ By the end of this workshop, you will be able to:
 * **Estimated Time:** 2 - 3 hours
 * **Estimated AWS Cost:** Less than $5 (Assuming you destroy the ephemeral layer immediately after the workshop. **Note:** RDS and ECS will incur hourly charges while running.)
 
+> **Take breaks!** This workshop is intensive and covers a lot of ground. Don't try to rush through everything in one sitting. Take a break between steps to rest, stretch, and recharge. You can always stop at any step and resume later — each step directory is a self-contained snapshot, so you won't lose progress. A fresh mind leads to better learning outcomes.
+
+> **Maximize your learning!** To get the most out of this workshop, we highly recommend reading through the `prompts.md` and the generated code while you wait for the AI to finish processing. Understanding *what* the AI is building and *why* is just as valuable as the final result. You don't have to complete everything in one sitting — take your time and proceed at your own pace.
+
 ## Prerequisites
 
 * **Knowledge:** Basic understanding of TypeScript and Docker. No deep AWS or Terraform expertise is required (the AI will help you!).
@@ -60,10 +68,20 @@ By the end of this workshop, you will be able to:
 
 ## How to Use
 
+In this workshop, you'll evolve the project by having an AI agent generate code for you. To keep your own change history, start by clicking the **"Fork"** button at the top right to copy this repository to your GitHub account, then `clone` it locally.
+
+```bash
+# Replace YOUR_USERNAME with your GitHub account name
+git clone https://github.com/YOUR_USERNAME/sample-ecs-express-ai-agent-workshop.git
+cd sample-ecs-express-ai-agent-workshop
+```
+
 1. Pick a step directory (start with `step-0/`)
-2. Open it in your AI agent
-3. Follow the prompts in `prompts.md` to build toward the next step
-4. Compare your result with the next step directory
+2. Read the step's `README.md` and `prompts.md` to understand the goal
+3. Try running the step yourself with `docker compose up`
+4. Open it in your AI agent
+5. Follow the prompts in `prompts.md` to build toward the next step
+6. Compare your result with the next step directory
 
 ## Optional Learning Path: Build from Scratch in Your Own Repository
 
@@ -80,9 +98,14 @@ For a more hands-on experience, you can create your own GitHub repository and bu
 
 Because Large Language Models (LLMs) are non-deterministic, the code they generate may vary slightly between runs, and you might occasionally encounter errors. This is a natural and expected part of AI-driven development. If you get stuck, try the following steps:
 
-1. **Feed the Error Back to the AI (Self-Healing)** — Don't panic if you encounter a bug or error. Simply copy the error log or terminal output and paste it back to your AI agent, asking it to "fix this error." Prompting the AI to understand the context and troubleshoot its own mistakes is a highly valuable skill and a core part of this learning experience.
+1. **Feed the Error Back to the AI (Self-Healing)** — Don't panic if you encounter a bug or error. Simply copy the error log or terminal output and paste it back to your AI agent, asking it to "fix this error." You can also paste a screenshot of the error — most modern AI agents understand images too. Prompting the AI to understand the context and troubleshoot its own mistakes is a highly valuable skill and a core part of this learning experience.
 
 2. **Resume from the Working Snapshot (Escape Hatch)** — If the AI gets stuck in a loop, or if the code becomes too broken to easily fix, you have a built-in escape hatch. You can discard your local changes (e.g., using `git checkout .`), or simply move directly to the next `step-*` directory. Because each step directory is a self-contained snapshot of the correctly implemented project, you can always safely resume the workshop from a known working state.
+
+3. **Running Out of AI Tokens?** — This workshop involves significant code generation and may consume a large number of tokens, especially in later steps. If you hit your plan's usage limit:
+   - **[Claude Max plan](https://claude.ai/upgrade)** — Provides significantly higher usage limits for Claude Code.
+   - **[Claude Code with Amazon Bedrock](https://docs.anthropic.com/en/docs/claude-code/bedrock)** — Use your AWS account to call Claude directly via Bedrock with pay-as-you-go pricing and no token caps. This is a great option if you already have an AWS account for this workshop.
+   - **Use step snapshots** — You can always skip to the next `step-*` directory and continue from a working state.
 
 ## Steps
 
@@ -105,7 +128,7 @@ An empty Next.js App Router project with Docker Compose for local development an
 
 ### [step-2](step-2/) — Next.js on ECS Express Mode
 
-The Next.js app with Terraform IaC for deploying to AWS ECS Express Mode, plus CI/CD via GitHub Actions. Frontend only — no backend or database.
+The Next.js app with Terraform IaC for deploying to Amazon ECS Express Mode, plus CI/CD via GitHub Actions. Frontend only — no backend or database.
 
 **What's added from step-1:**
 - Terraform IaC (persistent: VPC, ECR, IAM; ephemeral: ECS Express Gateway)
@@ -117,7 +140,7 @@ The Next.js app with Terraform IaC for deploying to AWS ECS Express Mode, plus C
 
 ### [step-3](step-3/) — Next.js + NestJS (health check) on ECS Express Mode
 
-Next.js frontend and a minimal NestJS backend (health check with GIT_SHA and Swagger), both deployed to AWS ECS Express Mode.
+Next.js frontend and a minimal NestJS backend (health check with GIT_SHA and Swagger), both deployed to Amazon ECS Express Mode.
 
 **What's added from step-2:**
 - NestJS 11 backend with `GET /health` endpoint (returns Git SHA)
@@ -130,7 +153,7 @@ Next.js frontend and a minimal NestJS backend (health check with GIT_SHA and Swa
 
 ### [step-4](step-4/) — Next.js + NestJS with Items CRUD on ECS Express Mode
 
-Next.js frontend and a NestJS backend with health check and Items CRUD (PostgreSQL + Prisma), deployed to AWS ECS Express Mode.
+Next.js frontend and a NestJS backend with health check and Items CRUD (PostgreSQL + Prisma), deployed to Amazon ECS Express Mode.
 
 **What's added from step-3:**
 - PostgreSQL 17 database
@@ -145,7 +168,7 @@ Next.js frontend and a NestJS backend with health check and Items CRUD (PostgreS
 
 ### [step-5](step-5/) — Next.js + NestJS with Auth + Items CRUD on ECS Express Mode
 
-Next.js frontend and a NestJS backend with email/password authentication (JWT) and user-scoped Items CRUD (PostgreSQL + Prisma), deployed to AWS ECS Express Mode.
+Next.js frontend and a NestJS backend with email/password authentication (JWT) and user-scoped Items CRUD (PostgreSQL + Prisma), deployed to Amazon ECS Express Mode.
 
 **What's added from step-4:**
 - Email/password sign-up and sign-in with JWT tokens
@@ -199,10 +222,6 @@ In a typical production environment, databases are placed in the persistent laye
 
 > **Warning:** Destroying the ephemeral layer will permanently delete all data within the DB. This is an intentional design choice for this workshop to embrace the concept of a "Disposable Environment."
 
-## Security
-
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
-
 ## License
 
-This library is licensed under the MIT-0 License. See the LICENSE file.
+[MIT](LICENSE)
