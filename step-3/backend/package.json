@@ -11,7 +11,7 @@
     "@nestjs/common": "^11.1.19",
     "@nestjs/core": "^11.1.19",
     "@nestjs/platform-express": "^11.1.19",
-    "@nestjs/swagger": "^11.4.1",
+    "@nestjs/swagger": "^11.4.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
